@@ -22,6 +22,13 @@
 
 #include <d3d11.h>
 
+// TODO: move this somewhere better?
+enum :int {
+	SUPERRES_None = 0,
+	SUPERRES_Intel = 1,
+	SUPERRES_Nvidia = 2
+};
+
 class VideoTextureBuffer
 {
 private:
@@ -163,6 +170,7 @@ public:
 	ID3D11Texture2D* GetNextInputTexture(const D3D11_VIDEO_FRAME_FORMAT vframeFormat);
 	void ResetFrameOrder();
 
+	HRESULT SetSuperRes(const int iType);
 	HRESULT SetRectangles(const RECT * pSrcRect, const RECT* pDstRect);
 	HRESULT SetColorSpace(const DXVA2_ExtendedFormat exFmt, const bool bHdrPassthrough);
 	void SetRotation(D3D11_VIDEO_PROCESSOR_ROTATION rotation);

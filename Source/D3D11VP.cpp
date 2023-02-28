@@ -428,6 +428,101 @@ void CD3D11VP::GetVPParams(D3D11_VIDEO_PROCESSOR_CAPS& caps, UINT& rateConvIndex
 	rateConvCaps = m_RateConvCaps;
 }
 
+HRESULT CD3D11VP::SetSuperRes(const int iType)
+{
+	// This func calls into both Intel & NV functions, so that we can tell Intel to disable itself if only NV was picked, or vice-versa
+
+	// Intel VP SuperRes
+	HRESULT hr;
+	{
+		constexpr GUID GUID_INTEL_VPE_INTERFACE = {
+		  0xedd1d4b9,
+		  0x8659,
+		  0x4cbc,
+		  {0xa4, 0xd6, 0x98, 0x31, 0xa2, 0x16, 0x3a, 0xc3} };
+
+		enum : UINT {
+			kIntelVpeFnVersion = 0x01,
+			kIntelVpeFnMode = 0x20,
+			kIntelVpeFnScaling = 0x37,
+		};
+
+		enum : UINT {
+			kIntelVpeVersion3 = 0x0003,
+		};
+
+		enum : UINT {
+			kIntelVpeModeNone = 0x0,
+			kIntelVpeModePreproc = 0x01,
+		};
+
+		enum : UINT {
+			kIntelVpeScalingDefault = 0x0,
+			kIntelVpeScalingSuperResolution = 0x2,
+		};
+
+		struct IntelVpeExt {
+			UINT function;
+			void* param;
+		};
+
+		IntelVpeExt ext = {};
+		UINT param = 0;
+		ext.param = &param;
+
+		ext.function = kIntelVpeFnVersion;
+		param = kIntelVpeVersion3;
+		hr = m_pVideoContext->VideoProcessorSetOutputExtension(
+			m_pVideoProcessor, &GUID_INTEL_VPE_INTERFACE, sizeof(ext), &ext);
+		if (!SUCCEEDED(hr)) {
+			return hr;
+		}
+
+		ext.function = kIntelVpeFnMode;
+		param = (iType == SUPERRES_Intel) ? kIntelVpeModePreproc : kIntelVpeModeNone;
+		hr = m_pVideoContext->VideoProcessorSetOutputExtension(
+			m_pVideoProcessor, &GUID_INTEL_VPE_INTERFACE, sizeof(ext), &ext);
+		if (!SUCCEEDED(hr)) {
+			return hr;
+		}
+
+		ext.function = kIntelVpeFnScaling;
+		param = (iType == SUPERRES_Intel) ? kIntelVpeScalingSuperResolution : kIntelVpeScalingDefault;
+
+		hr = m_pVideoContext->VideoProcessorSetStreamExtension(
+			m_pVideoProcessor, 0, &GUID_INTEL_VPE_INTERFACE, sizeof(ext), &ext);
+		if (!SUCCEEDED(hr)) {
+			return hr;
+		}
+	}
+
+	// NVIDIA RTX Super Resolution
+	{
+		constexpr GUID kNvidiaPPEInterfaceGUID = {
+		  0xd43ce1b3,
+		  0x1f4b,
+		  0x48ac,
+		  {0xba, 0xee, 0xc3, 0xc2, 0x53, 0x75, 0xe6, 0xf7} };
+		constexpr UINT kStreamExtensionVersionV1 = 0x1;
+		constexpr UINT kStreamExtensionMethodSuperResolution = 0x2;
+
+		struct {
+			UINT version;
+			UINT method;
+			UINT enable;
+		} stream_extension_info = { kStreamExtensionVersionV1,
+								   kStreamExtensionMethodSuperResolution, iType == SUPERRES_Nvidia ? 1 : 0 };
+
+		hr = m_pVideoContext->VideoProcessorSetStreamExtension(m_pVideoProcessor, 0, &kNvidiaPPEInterfaceGUID,
+			sizeof(stream_extension_info), &stream_extension_info);
+		if (!SUCCEEDED(hr)) {
+			return hr;
+		}
+	}
+
+	return hr;
+}
+
 HRESULT CD3D11VP::SetRectangles(const RECT* pSrcRect, const RECT* pDstRect)
 {
 	CheckPointer(m_pVideoContext, E_ABORT);

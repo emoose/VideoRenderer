@@ -1585,6 +1585,13 @@ HRESULT CDX11VideoProcessor::InitializeD3D11VP(const FmtConvParams_t& params, co
 		return hr;
 	}
 
+	// TODO: SetSuperRes can enable Intel superres too, but this only calls with SUPERRES_Nvidia atm
+	hr = m_D3D11VP.SetSuperRes(SUPERRES_Nvidia);
+	if (FAILED(hr)) {
+		DLog(L"CDX11VideoProcessor::InitializeD3D11VP() : SetSuperRes() failed with error {}", HR2Str(hr));
+		return hr;
+	}
+
 	hr = m_D3D11VP.SetColorSpace(m_srcExFmt, m_bHdrDisplayModeEnabled && SourceIsHDR());
 
 	hr = m_TexSrcVideo.Create(m_pDevice, dxgiFormat, width, height, Tex2D_DynamicShaderWriteNoSRV);
