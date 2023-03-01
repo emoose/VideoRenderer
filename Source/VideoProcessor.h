@@ -66,6 +66,8 @@ protected:
 
 	bool m_bVPScalingUseShaders = false;
 
+	int m_iVendorSuperResMode              = 0;
+
 	CopyFrameDataFn m_pConvertFn = nullptr;
 	CopyFrameDataFn m_pCopyGpuFn = CopyFrameAsIs;
 

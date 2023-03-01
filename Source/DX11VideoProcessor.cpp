@@ -1585,11 +1585,18 @@ HRESULT CDX11VideoProcessor::InitializeD3D11VP(const FmtConvParams_t& params, co
 		return hr;
 	}
 
-	// TODO: SetSuperRes can enable Intel superres too, but this only calls with SUPERRES_Nvidia atm
-	hr = m_D3D11VP.SetSuperRes(SUPERRES_Nvidia);
+	m_iVendorSuperResMode = SUPERRES_None;
+	if (m_VendorId == PCIV_NVIDIA) {
+		m_iVendorSuperResMode = SUPERRES_Nvidia;
+	}
+	else if (m_VendorId == PCIV_INTEL) {
+		m_iVendorSuperResMode = SUPERRES_Intel;
+	}
+
+	hr = m_D3D11VP.SetSuperRes(m_iVendorSuperResMode);
 	if (FAILED(hr)) {
 		DLog(L"CDX11VideoProcessor::InitializeD3D11VP() : SetSuperRes() failed with error {}", HR2Str(hr));
-		return hr;
+		m_iVendorSuperResMode = SUPERRES_None;
 	}
 
 	hr = m_D3D11VP.SetColorSpace(m_srcExFmt, m_bHdrDisplayModeEnabled && SourceIsHDR());
@@ -3479,6 +3486,14 @@ HRESULT CDX11VideoProcessor::DrawStats(ID3D11Texture2D* pRenderTarget)
 	if (m_srcRectWidth != dstW || m_srcRectHeight != dstH) {
 		if (m_D3D11VP.IsReady() && m_bVPScaling && !m_bVPScalingUseShaders) {
 			str.append(L" D3D11");
+
+			if (m_iVendorSuperResMode) {
+				if (m_iVendorSuperResMode == SUPERRES_Intel) {
+					str.append(L" Intel-VPE");
+				} else if (m_iVendorSuperResMode == SUPERRES_Nvidia) {
+					str.append(L" Nvidia-VSR");
+				}
+			}
 		} else {
 			str += L' ';
 			if (m_strShaderX) {
