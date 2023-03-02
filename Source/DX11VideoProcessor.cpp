@@ -1587,7 +1587,7 @@ HRESULT CDX11VideoProcessor::InitializeD3D11VP(const FmtConvParams_t& params, co
 
 	m_iVendorSuperResMode = SUPERRES_None;
 
-	if (!m_bHdrDisplayModeEnabled && !SourceIsHDR() && (params.cformat != CF_P010 && params.cformat != CF_P016)) {
+	if (!m_bHdrDisplayModeEnabled && !SourceIsHDR() && params.cformat == CF_NV12) {
 		if (m_VendorId == PCIV_NVIDIA) {
 			m_iVendorSuperResMode = SUPERRES_Nvidia;
 		} else if (m_VendorId == PCIV_INTEL) {
