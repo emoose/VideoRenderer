@@ -1597,7 +1597,7 @@ HRESULT CDX11VideoProcessor::InitializeD3D11VP(const FmtConvParams_t& params, co
 		hr = m_D3D11VP.SetSuperRes(m_iVendorSuperResMode);
 		if (FAILED(hr)) {
 			DLog(L"CDX11VideoProcessor::InitializeD3D11VP() : SetSuperRes() failed with error {}", HR2Str(hr));
-			m_iVendorSuperResMode = SUPERRES_None;
+			m_iVendorSuperResMode |= SUPERRES_Error;
 		}
 	}
 
@@ -3491,10 +3491,14 @@ HRESULT CDX11VideoProcessor::DrawStats(ID3D11Texture2D* pRenderTarget)
 
 			// Even though we requested a mode we can't be sure it's actually enabled, user could have disabled in NVCP etc
 			// and no error code is returned by VideoProcessorSetXXXExtension, so tag these as requested instead
-			if (m_iVendorSuperResMode == SUPERRES_Intel) {
-				str.append(L" Intel-VPE-requested");
-			} else if (m_iVendorSuperResMode == SUPERRES_Nvidia) {
-				str.append(L" Nvidia-VSR-requested");
+			if (m_iVendorSuperResMode != SUPERRES_None) {
+				if (m_iVendorSuperResMode & SUPERRES_Intel) {
+					str.append(L" Intel-VPE");
+				} else if (m_iVendorSuperResMode & SUPERRES_Nvidia) {
+					str.append(L" Nvidia-VSR");
+				}
+				// Error flag is set if SetSuperRes failed, display it to user
+				str.append(((m_iVendorSuperResMode & SUPERRES_Error) == SUPERRES_Error) ? L"-errored" : L"-requested");
 			}
 		} else {
 			str += L' ';

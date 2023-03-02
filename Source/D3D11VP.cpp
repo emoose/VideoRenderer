@@ -479,7 +479,7 @@ HRESULT CD3D11VP::SetSuperRes(const int iType)
 		}
 
 		ext.function = kIntelVpeFnMode;
-		param = (iType == SUPERRES_Intel) ? kIntelVpeModePreproc : kIntelVpeModeNone;
+		param = ((iType & SUPERRES_Intel) == SUPERRES_Intel) ? kIntelVpeModePreproc : kIntelVpeModeNone;
 		hr = m_pVideoContext->VideoProcessorSetOutputExtension(
 			m_pVideoProcessor, &GUID_INTEL_VPE_INTERFACE, sizeof(ext), &ext);
 		if (!SUCCEEDED(hr)) {
@@ -487,7 +487,7 @@ HRESULT CD3D11VP::SetSuperRes(const int iType)
 		}
 
 		ext.function = kIntelVpeFnScaling;
-		param = (iType == SUPERRES_Intel) ? kIntelVpeScalingSuperResolution : kIntelVpeScalingDefault;
+		param = ((iType & SUPERRES_Intel) == SUPERRES_Intel) ? kIntelVpeScalingSuperResolution : kIntelVpeScalingDefault;
 
 		hr = m_pVideoContext->VideoProcessorSetStreamExtension(
 			m_pVideoProcessor, 0, &GUID_INTEL_VPE_INTERFACE, sizeof(ext), &ext);
@@ -511,7 +511,7 @@ HRESULT CD3D11VP::SetSuperRes(const int iType)
 			UINT method;
 			UINT enable;
 		} stream_extension_info = { kStreamExtensionVersionV1,
-								   kStreamExtensionMethodSuperResolution, iType == SUPERRES_Nvidia ? 1 : 0 };
+								   kStreamExtensionMethodSuperResolution, ((iType & SUPERRES_Nvidia) == SUPERRES_Nvidia) ? 1 : 0 };
 
 		hr = m_pVideoContext->VideoProcessorSetStreamExtension(m_pVideoProcessor, 0, &kNvidiaPPEInterfaceGUID,
 			sizeof(stream_extension_info), &stream_extension_info);

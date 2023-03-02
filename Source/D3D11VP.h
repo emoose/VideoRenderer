@@ -25,8 +25,9 @@
 // TODO: move this somewhere better?
 enum :int {
 	SUPERRES_None = 0,
-	SUPERRES_Intel = 1,
-	SUPERRES_Nvidia = 2
+	SUPERRES_Intel = 1 << 0,
+	SUPERRES_Nvidia = 1 << 1,
+	SUPERRES_Error = 1 << 2
 };
 
 class VideoTextureBuffer
