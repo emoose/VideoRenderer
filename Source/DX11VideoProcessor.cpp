@@ -841,6 +841,11 @@ void CDX11VideoProcessor::UpdateRenderRect()
 {
 	m_renderRect.IntersectRect(m_videoRect, m_windowRect);
 	UpdateScalingStrings();
+
+	// Enable/disable SuperRes mode based on whether image is being upscaled or not
+	// VSR doesn't seem to support downscaling at all, so we'll only activate it 
+	// when display res is greater than video res
+	UpdateSuperRes(UINT(m_videoRect.Width()) > m_srcWidth || UINT(m_videoRect.Height()) > m_srcHeight);
 }
 
 void CDX11VideoProcessor::UpdateScalingStrings()
@@ -1585,21 +1590,9 @@ HRESULT CDX11VideoProcessor::InitializeD3D11VP(const FmtConvParams_t& params, co
 		return hr;
 	}
 
-	m_iVendorSuperResMode = SUPERRES_None;
-
-	if (!SourceIsHDR() && params.cformat == CF_NV12) {
-		if (m_VendorId == PCIV_NVIDIA) {
-			m_iVendorSuperResMode = SUPERRES_Nvidia;
-		} else if (m_VendorId == PCIV_INTEL) {
-			m_iVendorSuperResMode = SUPERRES_Intel;
-		}
-
-		hr = m_D3D11VP.SetSuperRes(m_iVendorSuperResMode);
-		if (FAILED(hr)) {
-			DLog(L"CDX11VideoProcessor::InitializeD3D11VP() : SetSuperRes() failed with error {}", HR2Str(hr));
-			m_iVendorSuperResMode |= SUPERRES_Error;
-		}
-	}
+	// Seems NV VSR SuperRes must first be enabled either during init or before some point in D3D11 rendering (unknown when exactly)
+	// Otherwise attempts to activate it later on will have no effect?
+	UpdateSuperRes(true);
 
 	hr = m_D3D11VP.SetColorSpace(m_srcExFmt, m_bHdrDisplayModeEnabled && SourceIsHDR());
 
@@ -2396,6 +2389,30 @@ void CDX11VideoProcessor::UpdateBitmapShader()
 		m_pPS_BitmapToFrame = m_pPS_Simple;
 		m_dwStatsTextColor = D3DCOLOR_XRGB(255, 255, 255);
 	}
+}
+
+void CDX11VideoProcessor::UpdateSuperRes(bool enable)
+{
+	int newVendorSuperResFlags = SUPERRES_None;
+
+	if (enable && !SourceIsHDR() && m_srcParams.cformat == CF_NV12) {
+		if (m_VendorId == PCIV_NVIDIA) {
+			newVendorSuperResFlags = SUPERRES_Nvidia;
+		}
+		else if (m_VendorId == PCIV_INTEL) {
+			newVendorSuperResFlags = SUPERRES_Intel;
+		}
+	}
+
+	if (newVendorSuperResFlags != m_iVendorSuperResFlags) {
+		auto hr = m_D3D11VP.SetSuperRes(newVendorSuperResFlags);
+		if (FAILED(hr)) {
+			DLog(L"CDX11VideoProcessor::UpdateSuperRes() : SetSuperRes() failed with error {}", HR2Str(hr));
+			newVendorSuperResFlags |= SUPERRES_Error;
+		}
+	}
+
+	m_iVendorSuperResFlags = newVendorSuperResFlags;
 }
 
 HRESULT CDX11VideoProcessor::D3D11VPPass(ID3D11Texture2D* pRenderTarget, const CRect& srcRect, const CRect& dstRect, const bool second)
@@ -3491,14 +3508,14 @@ HRESULT CDX11VideoProcessor::DrawStats(ID3D11Texture2D* pRenderTarget)
 
 			// Even though we requested a mode we can't be sure it's actually enabled, user could have disabled in NVCP etc
 			// and no error code is returned by VideoProcessorSetXXXExtension, so tag these as requested instead
-			if (m_iVendorSuperResMode != SUPERRES_None) {
-				if (m_iVendorSuperResMode & SUPERRES_Intel) {
+			if (m_iVendorSuperResFlags != SUPERRES_None) {
+				if (m_iVendorSuperResFlags & SUPERRES_Intel) {
 					str.append(L" Intel-VPE");
-				} else if (m_iVendorSuperResMode & SUPERRES_Nvidia) {
+				} else if (m_iVendorSuperResFlags & SUPERRES_Nvidia) {
 					str.append(L" Nvidia-VSR");
 				}
 				// Error flag is set if SetSuperRes failed, display it to user
-				str.append(((m_iVendorSuperResMode & SUPERRES_Error) == SUPERRES_Error) ? L"-errored" : L"-requested");
+				str.append(((m_iVendorSuperResFlags & SUPERRES_Error) == SUPERRES_Error) ? L"-errored" : L"-requested");
 			}
 		} else {
 			str += L' ';

@@ -254,6 +254,7 @@ private:
 	void UpdateDownscalingShaders();
 	HRESULT UpdateConvertColorShader();
 	void UpdateBitmapShader();
+	void UpdateSuperRes(bool enable);
 
 	HRESULT D3D11VPPass(ID3D11Texture2D* pRenderTarget, const CRect& srcRect, const CRect& dstRect, const bool second);
 	HRESULT ConvertColorPass(ID3D11Texture2D* pRenderTarget);
