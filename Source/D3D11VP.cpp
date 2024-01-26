@@ -377,7 +377,6 @@ HRESULT CD3D11VP::InitVideoProcessor(
 	// other
 	m_pVideoContext->VideoProcessorSetOutputTargetRect(m_pVideoProcessor, FALSE, nullptr);
 	m_pVideoContext->VideoProcessorSetStreamRotation(m_pVideoProcessor, 0, m_Rotation ? TRUE : FALSE, m_Rotation);
-	SetRtxHdrNvidia(true);
 
 	m_srcFormat   = inputFmt;
 	m_srcWidth    = width;
