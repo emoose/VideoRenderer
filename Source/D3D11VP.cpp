@@ -377,6 +377,7 @@ HRESULT CD3D11VP::InitVideoProcessor(
 	// other
 	m_pVideoContext->VideoProcessorSetOutputTargetRect(m_pVideoProcessor, FALSE, nullptr);
 	m_pVideoContext->VideoProcessorSetStreamRotation(m_pVideoProcessor, 0, m_Rotation ? TRUE : FALSE, m_Rotation);
+	SetRtxHdrNvidia(true);
 
 	m_srcFormat   = inputFmt;
 	m_srcWidth    = width;
@@ -691,6 +692,55 @@ HRESULT CD3D11VP::SetSuperResNvidia(const bool enable)
 
 	if (hr == S_OK && !enable) {
 		hr = S_FALSE;
+	}
+
+	return hr;
+}
+
+HRESULT CD3D11VP::SetRtxHdrNvidia(const bool enable)
+{
+	constexpr GUID kNvidiaTrueHDRInterfaceGUID = {
+		0xfdd62bb4,
+		0x620b,
+		0x4fd7,
+		{0x9a, 0xb3, 0x1e, 0x59, 0xd0, 0xd5, 0x44, 0xb3}
+	};
+	constexpr UINT kStreamExtensionVersionV4 = 0x4;
+	constexpr UINT kStreamExtensionMethodTrueHDR = 0x3;
+
+	struct {
+		UINT version;
+		UINT method;
+		UINT enable : 1;
+		UINT reserved : 31;
+	}
+	stream_extension_info = {
+		kStreamExtensionVersionV4,
+		kStreamExtensionMethodTrueHDR,
+		enable ? 1u : 0u,
+		0u
+	};
+
+	HRESULT hr;
+
+	UINT driver_supports_true_hdr = 0;
+	hr = m_pVideoContext->VideoProcessorGetStreamExtension(
+		m_pVideoProcessor, 0, &kNvidiaTrueHDRInterfaceGUID,
+		sizeof(driver_supports_true_hdr), &driver_supports_true_hdr);
+
+	if (FAILED(hr)) {
+		return S_FALSE;
+	}
+	if (driver_supports_true_hdr != 1) {
+		return S_FALSE;
+	}
+
+	hr = m_pVideoContext->VideoProcessorSetStreamExtension(
+		m_pVideoProcessor, 0, &kNvidiaTrueHDRInterfaceGUID,
+		sizeof(stream_extension_info), &stream_extension_info);
+
+	if (hr == S_OK && !enable) {
+		return S_FALSE;
 	}
 
 	return hr;

@@ -184,6 +184,7 @@ private:
 	HRESULT SetSuperResIntel(const bool enable);
 public:
 	HRESULT SetSuperRes(const int iSuperRes);
+	HRESULT SetRtxHdrNvidia(const bool enable);
 
 	HRESULT Process(ID3D11Texture2D* pRenderTarget, const D3D11_VIDEO_FRAME_FORMAT sampleFormat, const bool second);
 };
