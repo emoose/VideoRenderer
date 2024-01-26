@@ -824,7 +824,7 @@ HRESULT CD3D11VP::SetSuperRes(const int iSuperRes)
 		}
 		break;
 	case SUPERRES_FHD:
-		if (m_srcWidth <= 2048 && m_srcHeight <= 1088) {
+		if (m_srcWidth <= 2560 && m_srcHeight <= 1440) {
 			enable = true;
 		}
 		break;
