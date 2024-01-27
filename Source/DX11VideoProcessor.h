@@ -151,6 +151,7 @@ private:
 
 	int m_iVPSuperRes = 0;
 	bool m_bVPUseSuperRes = false; // but it is not exactly
+	int m_iVPAutoHdrCDepth = 0; // hack so that InitSwapChain can see the CDepth passed to InitMediaType...
 
 	bool m_bHdrPassthroughSupport = false;
 	bool m_bHdrDisplaySwitching   = false; // switching HDR display in progress

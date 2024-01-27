@@ -1310,7 +1310,7 @@ HRESULT CDX11VideoProcessor::InitSwapChain()
 		}
 	}
 
-	const auto bHdrOutput = m_bHdrPassthroughSupport && m_bHdrPassthrough && (SourceIsHDR() || m_srcParams.CDepth <= 8);
+	const auto bHdrOutput = m_bHdrPassthroughSupport && m_bHdrPassthrough && (SourceIsHDR() || m_iVPAutoHdrCDepth == 8);
 	const auto b10BitOutput = bHdrOutput || Preferred10BitOutput();
 	m_SwapChainFmt = b10BitOutput ? DXGI_FORMAT_R10G10B10A2_UNORM : DXGI_FORMAT_B8G8R8A8_UNORM;
 
@@ -1654,7 +1654,8 @@ BOOL CDX11VideoProcessor::InitMediaType(const CMediaType* pmt)
 		}
 	}
 
-	if (Preferred10BitOutput() && m_SwapChainFmt == DXGI_FORMAT_B8G8R8A8_UNORM) {
+	if ((Preferred10BitOutput() && m_SwapChainFmt == DXGI_FORMAT_B8G8R8A8_UNORM) || m_iVPAutoHdrCDepth != FmtParams.CDepth) {
+		m_iVPAutoHdrCDepth = FmtParams.CDepth;
 		ReleaseSwapChain();
 		Init(m_hWnd);
 	}
