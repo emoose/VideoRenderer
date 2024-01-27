@@ -1310,7 +1310,7 @@ HRESULT CDX11VideoProcessor::InitSwapChain()
 		}
 	}
 
-	const auto bHdrOutput = m_bHdrPassthroughSupport && m_bHdrPassthrough && (SourceIsHDR() || m_srcParams.CDepth <= 8);
+	const auto bHdrOutput = m_bHdrPassthroughSupport && m_bHdrPassthrough;
 	const auto b10BitOutput = bHdrOutput || Preferred10BitOutput();
 	m_SwapChainFmt = b10BitOutput ? DXGI_FORMAT_R10G10B10A2_UNORM : DXGI_FORMAT_B8G8R8A8_UNORM;
 
@@ -1741,9 +1741,9 @@ HRESULT CDX11VideoProcessor::InitializeD3D11VP(const FmtConvParams_t& params, co
 
 	m_TexSrcVideo.Release();
 
-	const bool bHdrRequestAutoHDR = m_bHdrDisplayModeEnabled && params.CDepth <= 8;
+	const bool bHdrWillAutoHDRUpconvert = m_bHdrDisplayModeEnabled && params.CDepth <= 8; // TODO: add check if autoHDR is available here...
 
-	const bool bHdrPassthrough = m_bHdrDisplayModeEnabled && (SourceIsPQorHLG() || bHdrRequestAutoHDR);
+	const bool bHdrPassthrough = m_bHdrDisplayModeEnabled && (SourceIsPQorHLG() || bHdrWillAutoHDRUpconvert);
 	m_D3D11OutputFmt = m_InternalTexFmt;
 	HRESULT hr = m_D3D11VP.InitVideoProcessor(dxgiFormat, width, height, m_srcExFmt, m_bInterlaced, bHdrPassthrough, m_D3D11OutputFmt);
 	if (FAILED(hr)) {
@@ -1759,9 +1759,7 @@ HRESULT CDX11VideoProcessor::InitializeD3D11VP(const FmtConvParams_t& params, co
 
 	if (!SourceIsHDR()) {
 		// Only enable RTX HDR if it's HDR display & we're playing an 8-bit format
-		if (bHdrRequestAutoHDR) {
-			m_D3D11VP.SetRtxHdrNvidia(true);
-		}
+		m_D3D11VP.SetRtxHdrNvidia(true);
 		m_bVPUseSuperRes = (m_D3D11VP.SetSuperRes(m_bVPScaling ? m_iVPSuperRes : 0) == S_OK);
 	}
 
