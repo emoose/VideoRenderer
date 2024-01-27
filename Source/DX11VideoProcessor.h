@@ -153,6 +153,10 @@ private:
 	bool m_bVPUseSuperRes = false; // but it is not exactly
 	bool m_bVPUseAutoHDR = true;
 
+	inline bool VPUseAutoHDR() {
+		return m_bHdrPassthroughSupport && m_bHdrPassthrough && m_bHdrDisplayModeEnabled && m_bVPUseAutoHDR;
+	}
+
 	bool m_bHdrPassthroughSupport = false;
 	bool m_bHdrDisplaySwitching   = false; // switching HDR display in progress
 	bool m_bHdrDisplayModeEnabled = false;
