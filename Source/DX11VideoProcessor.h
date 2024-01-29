@@ -154,7 +154,7 @@ private:
 	bool m_bVPUseAutoHDR = true;
 
 	inline bool VPUseAutoHDR() {
-		return m_bHdrPassthroughSupport && m_bHdrPassthrough && m_bHdrDisplayModeEnabled && m_bVPUseAutoHDR;
+		return m_VendorId == PCIV_NVIDIA && m_bHdrPassthroughSupport && m_bHdrPassthrough && m_bHdrDisplayModeEnabled && m_bVPUseAutoHDR;
 	}
 
 	bool m_bHdrPassthroughSupport = false;

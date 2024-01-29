@@ -3631,9 +3631,11 @@ void CDX11VideoProcessor::UpdateStatsStatic()
 		}
 		m_strStatsVProc += std::format(L"\nInternalFormat: {}", DXGIFormatToString(m_InternalTexFmt));
 
-		if (SourceIsHDR()) {
+		if (SourceIsHDR() || VPUseAutoHDR()) {
 			m_strStatsHDR.assign(L"\nHDR processing: ");
-			if (m_bHdrPassthroughSupport && m_bHdrPassthrough) {
+			if (!SourceIsHDR() && VPUseAutoHDR()) {
+				m_strStatsHDR.append(L"RTX Video HDR*");
+			} else if (m_bHdrPassthroughSupport && m_bHdrPassthrough) {
 				m_strStatsHDR.append(L"Passthrough");
 				if (m_lastHdr10.bValid) {
 					m_strStatsHDR += std::format(L", {} nits", m_lastHdr10.hdr10.MaxMasteringLuminance / 10000);
@@ -3722,9 +3724,6 @@ HRESULT CDX11VideoProcessor::DrawStats(ID3D11Texture2D* pRenderTarget)
 			str.append(L" D3D11");
 			if (m_bVPUseSuperRes) {
 				str.append(L" SuperResolution*");
-			}
-			if (VPUseAutoHDR()) {
-				str.append(L" AutoHDR*");
 			}
 		} else {
 			str += L' ';
