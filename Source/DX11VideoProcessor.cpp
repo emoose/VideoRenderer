@@ -1744,7 +1744,7 @@ HRESULT CDX11VideoProcessor::InitializeD3D11VP(const FmtConvParams_t& params, co
 	const bool bHdrWillAutoHDRUpconvert8Bit = VPUseAutoHDR() && params.CDepth <= 8;
 
 	const bool bHdrPassthrough = m_bHdrDisplayModeEnabled && (SourceIsPQorHLG() || bHdrWillAutoHDRUpconvert8Bit);
-	m_D3D11OutputFmt = m_InternalTexFmt;
+	m_D3D11OutputFmt = (VPUseAutoHDR() ? DXGI_FORMAT_R10G10B10A2_UNORM : m_InternalTexFmt);
 	HRESULT hr = m_D3D11VP.InitVideoProcessor(dxgiFormat, width, height, m_srcExFmt, m_bInterlaced, bHdrPassthrough, m_D3D11OutputFmt);
 	if (FAILED(hr)) {
 		DLog(L"CDX11VideoProcessor::InitializeD3D11VP() : InitVideoProcessor() failed with error {}", HR2Str(hr));
